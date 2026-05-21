@@ -1583,10 +1583,14 @@ function renderGiamDinhTable(data) {
         
         // BIỆN PHÁP LOGIC TỰ ĐỘNG ĐỔI THÀNH TÍCH XANH (CÓ) / TÍCH ĐỎ (KHÔNG) ĐỨNG GIỮA Ô
         let badgeRepair = "";
-        if (row['Cần sửa chữa'] === 'CÓ') {
-            badgeRepair = `<div class="text-center text-success fs-5" title="Đủ điều kiện cần sửa chữa"><i class="bi bi-check-circle-fill"></i></div>`;
+        const checkTrangThai = row['Trạng thái'] ? row['Trạng thái'].toString().trim().toUpperCase() : '';
+
+        if (checkTrangThai === 'C') {
+    // Nếu là trạng thái C -> Hiển thị dấu tích xanh lá cây
+          badgeRepair = `<div class="text-center text-success fs-5" title="Cần sửa chữa (Trạng thái C)"><i class="bi bi-check-circle-fill"></i></div>`;
         } else {
-            badgeRepair = `<div class="text-center text-danger fs-5" title="Không cần sửa chữa"><i class="bi bi-x-circle-fill"></i></div>`;
+    // Nếu là trạng thái A hoặc B -> Hiển thị dấu X màu đỏ (Không cần sửa)
+          badgeRepair = `<div class="text-center text-danger fs-5" title="Không cần sửa chữa (Trạng thái A/B)"><i class="bi bi-x-circle-fill"></i></div>`;
         }
 
         tr.innerHTML = `
