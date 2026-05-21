@@ -1671,7 +1671,10 @@ function renderSuaChuaPage() {
     tbody.innerHTML = "";
 
     // Lọc các hàng có thuộc tính Cần sửa chữa bằng "CÓ" từ dữ liệu giám định hiện thời
-    const listRepair = dataGiamDinh.filter(item => item['Cần sửa chữa'] === 'CÓ');
+    const listRepair = dataGiamDinh.filter(item => {
+        const trangThai = item['Trạng thái'] ? item['Trạng thái'].toString().trim().toUpperCase() : '';
+        return trangThai === 'C';
+    });
 
     if (listRepair.length === 0) {
         tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">Hiện tại không có container nào cần sửa chữa. Gầm vỏ đạt tiêu chuẩn an toàn bãi!</td></tr>`;
