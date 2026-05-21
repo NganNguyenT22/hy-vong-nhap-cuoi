@@ -527,9 +527,9 @@ function renderTableHaRong(data) {
     list.forEach((row, index) => {
         // Định nghĩa màu sắc Huy hiệu trạng thái A, B, C
         let badgeClass = "bg-success"; 
-        let textTrangThai = "A (Tốt)";
-        if(row["Trạng thái"] === "B") { badgeClass = "bg-warning text-dark"; textTrangThai = "B (Bình thường)"; }
-        if(row["Trạng thái"] === "C") { badgeClass = "bg-danger"; textTrangThai = "C (Tệ)"; }
+        let textTrangThai = "A";
+        if(row["Trạng thái"] === "B") { badgeClass = "bg-warning text-dark"; textTrangThai = "B"; }
+        if(row["Trạng thái"] === "C") { badgeClass = "bg-danger"; textTrangThai = "C"; }
 
         html += `
         <tr>
@@ -751,12 +751,12 @@ function renderTableCapRong(data) {
 
     list.forEach((row, index) => {
         let badgeColor = "bg-success";
-        let labelText = "A (Tốt)";
+        let labelText = "A ";
         
         // Chấp nhận cả chữ thường và chữ hoa từ Google Sheets để tránh lỗi không nhận diện hạng vỏ
         const trangThaiVo = row["Trạng thái"] || row["Trạng thái "] || row["Hạng"] || "A";
-        if (trangThaiVo === "B") { badgeColor = "bg-warning text-dark"; labelText = "B (Bình thường)"; }
-        if (trangThaiVo === "C") { badgeColor = "bg-danger"; labelText = "C (Tệ)"; }
+        if (trangThaiVo === "B") { badgeColor = "bg-warning text-dark"; labelText = "B"; }
+        if (trangThaiVo === "C") { badgeColor = "bg-danger"; labelText = "C"; }
 
         const maCont = row["Mã container"] || row["Mã Container"] || row["Số Container"] || '';
         const sizeCont = row["Size"] || '';
@@ -1502,7 +1502,7 @@ function renderGiamDinhTable(data) {
         const tr = document.createElement('tr');
         
         let statusClass = row['Trạng thái'] === 'A' ? 'bg-status-a' : row['Trạng thái'] === 'B' ? 'bg-status-b' : 'bg-status-c';
-        let textTrangThai = row['Trạng thái'] === 'A' ? 'A (Tốt)' : row['Trạng thái'] === 'B' ? 'B (Bình thường)' : 'C (Tệ)';
+        let textTrangThai = row['Trạng thái'] === 'A' ? 'A' : row['Trạng thái'] === 'B' ? 'B' : 'C';
         
         // BIỆN PHÁP LOGIC TỰ ĐỘNG ĐỔI THÀNH TÍCH XANH (CÓ) / TÍCH ĐỎ (KHÔNG) ĐỨNG GIỮA Ô
         let badgeRepair = "";
@@ -1579,7 +1579,7 @@ function renderGiamDinhTable(data) {
         const tr = document.createElement('tr');
         
         let statusClass = row['Trạng thái'] === 'A' ? 'bg-status-a' : row['Trạng thái'] === 'B' ? 'bg-status-b' : 'bg-status-c';
-        let textTrangThai = row['Trạng thái'] === 'A' ? 'A (Tốt)' : row['Trạng thái'] === 'B' ? 'B (Bình thường)' : 'C (Tệ)';
+        let textTrangThai = row['Trạng thái'] === 'A' ? 'A' : row['Trạng thái'] === 'B' ? 'B' : 'C';
         
         // BIỆN PHÁP LOGIC TỰ ĐỘNG ĐỔI THÀNH TÍCH XANH (CÓ) / TÍCH ĐỎ (KHÔNG) ĐỨNG GIỮA Ô
         let badgeRepair = "";
