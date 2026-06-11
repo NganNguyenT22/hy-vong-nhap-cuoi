@@ -2328,63 +2328,83 @@ async function checkBookingHopLe(bookingInput) {
 }
 // ================= NGHIỆP VỤ TẠO PHIẾU EIR HẠ RỖNG =================
 
-// 1. Chờ DOM sẵn sàng để gán bộ lắng nghe Form
 document.addEventListener("DOMContentLoaded", function () {
   const formHaRong = document.getElementById("form-eir-harong");
   if (formHaRong) {
-    formHaRong.addEventListener("submit", executeSaveEIRHaRong);
+    formHaRong.addEventListener("submit", saveEIRHaRongToSheet);
   }
 });
 
-// 2. Hàm gom dữ liệu từ Web đẩy thẳng về API Google Sheets thông qua POST
-async function executeSaveEIRHaRong(e) {
-  if (e) e.preventDefault(); // Ngăn chặn tải lại trang web làm ngắt kết nối API
+async function saveEIRHaRongToSheet(e) {
+  if (e) e.preventDefault(); // Chặn reload trang web triệt để
 
-  // Lấy giá trị ô nhập số booking/lệnh từ giao diện của bạn
-  const inputBookingElement = document.getElementById("harong-booking") || document.getElementById("eir-booking");
-  if (!inputBookingElement) {
-     alert("Không tìm thấy ô nhập Số Booking trên giao diện!");
-     return;
-  }
-  const bookingValue = inputBookingElement.value.trim();
+  const bookingVal = document.getElementById("harong-booking").value.trim();
 
-  // Chạy thẩm định số lệnh
-  const checkValid = await checkBookingHopLe(bookingValue);
-  if (!checkValid) {
-    alert("❌ Số Booking/Lệnh này không tồn tại trên hệ thống! Vui lòng kiểm tra lại.");
+  // 1. Chạy hàm thẩm định xem Số Booking có nằm trong danh mục Quản lý Lệnh không
+  const isBookingValid = await checkBookingHopLe(bookingVal);
+  if (!isBookingValid) {
+    alert("❌ Nhập sai! Số Booking không tồn tại trong hệ thống QL. Lệnh.");
     return;
   }
 
   showLoading(true);
 
-  // Gói Payload chuẩn cấu hình POST gửi lên Google Apps Script
+  // 2. Thu thập dữ liệu từ các ô nhập trên giao diện Web
+  const solenh = document.getElementById("harong-solenh").value.trim();
+  const hangtau = document.getElementById("harong-hangtau").value.trim();
+  const loaivo = document.getElementById("harong-loaivo").value.trim();
+  const socont = document.getElementById("harong-socont").value.trim();
+  const trangthai = document.getElementById("harong-trangthai").value.trim();
+  const soxe = document.getElementById("harong-soxe").value.trim();
+  const romooc = document.getElementById("harong-romooc").value.trim();
+  const taixe = document.getElementById("harong-taixe").value.trim();
+  const ghichu = document.getElementById("harong-ghichu").value.trim();
+
+  // Tạo mã Số EIR ngẫu nhiên tự động hoặc theo chuỗi thời gian (Ví dụ: EIR26xxxx)
+  const soEIR = "EIR" + Math.floor(100000 + Math.random() * 900000); 
+
+  // 3. Đóng gói payload gửi lên Google Apps Script
   const payload = {
-    action: "saveEIR",         // Định danh hành động xử lý trên Apps Script
-    sheetType: "GiaoNhan",     // Đích đến là Sheet Giao Nhận
-    loaiPhieu: "HaRong",       // Phân loại Hạ rỗng
-    booking: bookingValue.toUpperCase(),
-    thoiGian: new Date().toLocaleString("vi-VN")
-    // Bạn có thể bổ sung thêm document.getElementById các trường như số xe, tài xế vào đây nếu cần lưu thêm
+    action: "saveEIR",
+    sheetType: "GiaoNhan",       // Chỉ định nạp vào tab Giao Nhận
+    loaiPhieu: "HaRong",         // Phân bổ logic xử lý hạ rỗng
+    
+    // Khớp 100% với cấu trúc các cột trên ảnh Excel của bạn
+    thoiGian: new Date().toLocaleString("vi-VN"),
+    soEIR: soEIR,
+    soLenh: solenh,
+    booking: bookingVal.toUpperCase(),
+    hangTau: hangtau.toUpperCase(),
+    loaiVo: loaivo.toUpperCase(),
+    soCont: socont.toUpperCase(),
+    trangThai: trangthai,
+    soXe: soxe.toUpperCase(),
+    roMooc: romooc.toUpperCase(),
+    taiXe: taixe,
+    ghiChu: ghichu
   };
 
   try {
     const response = await fetch(API_URL, {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify(payload)
     });
 
     if (response.ok) {
-      alert("🎉 Tạo phiếu lệnh EIR Hạ Rỗng thành công! Dữ liệu đã ghi nhận về Google Sheets.");
-      document.getElementById("form-eir-harong").reset(); // Xóa sạch form nhập liệu
+      alert(`🎉 Thành công! Đã tạo phiếu lệnh ${soEIR} và lưu vào bảng Excel Hạ Rỗng.`);
+      document.getElementById("form-eir-harong").reset(); // Làm sạch form
       
-      // Tải lại bảng danh sách giao nhận hiển thị trên màn hình nếu có hàm fetch
+      // Khởi động lại bảng danh sách để cập nhật dòng mới lên màn hình Web
       if (typeof fetchGiaoNhanData === "function") fetchGiaoNhanData();
     } else {
-      alert(" Máy chủ phản hồi lỗi. Không thể lưu dữ liệu.");
+      alert("⚠️ Lỗi từ máy chủ Google Sheets phản hồi. Không thể ghi dữ liệu.");
     }
   } catch (error) {
-    console.error("Lỗi API kết nối Google Sheets:", error);
-    alert("❌ Lỗi kết nối mạng hoặc lỗi đường link API_URL Apps Script!");
+    console.error("Lỗi đường truyền POST API:", error);
+    alert("❌ Không thể kết nối với Google Sheets. Vui lòng kiểm tra lại mạng hoặc link API_URL Apps Script!");
   } finally {
     showLoading(false);
   }
