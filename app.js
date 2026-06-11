@@ -2020,22 +2020,31 @@ function renderGiamDinhTable(data) {
     }
 
     tr.innerHTML = `
-            <td class="ps-3 fw-bold text-secondary">${index + 1}</td>
-            <td class="fw-bold text-primary">${row["Mã container"] || ""}</td>
-            <td class="fw-bold text-dark">${row["Hãng tàu"] || ""}</td>
-            <td><small class="text-wrap d-block" style="max-width: 250px;">${row["Tình trạng"] || "Không lỗi"}</small></td>
-            <td><span class="badge ${statusClass} py-1 px-2">${textTrangThai}</span></td>
-            <td><span class="text-muted small">${row["Ghi chú"] || "-"}</span></td>
-            <td>${badgeRepair}</td>
-            <td class="text-end pe-3">
-                <button class="btn btn-sm btn-light border me-1 py-1 px-2" title="Lịch sử" onclick="viewHistoryGiamDinh('${row["Mã container"]}')">
-                    <span class="fw-bold text-dark small" style="font-family: monospace;">H</span>
-                </button>
-                <button class="btn btn-sm btn-outline-primary py-1 px-2" title="Sửa dòng" onclick="editGiamDinh(${row.rowIndex})">
-                    <i class="bi bi-pencil-fill small"></i>
-                </button>
-            </td>
-        `;
+      <td class="ps-3 fw-bold text-secondary">${index + 1}</td>
+      <td class="fw-bold text-primary">${row["Mã container"] || ""}</td>
+      <td class="fw-bold text-dark">${row["Hãng tàu"] || ""}</td>
+      <td><small class="text-wrap d-block" style="max-width: 250px;">${row["Tình trạng"] || "Không lỗi"}</small></td>
+      <td><span class="badge ${statusClass} py-1 px-2">${textTrangThai}</span></td>
+      <td><span class="text-muted small">${row["Ghi chú"] || "-"}</span></td>
+      <td>${badgeRepair}</td>
+      <td class="text-end pe-3">
+        <div class="btn-group btn-group-sm">
+          <button class="btn btn-outline-info" title="Chi tiết" onclick="viewDetailGiamDinh(${row.rowIndex})">
+            <i class="bi bi-info-circle"></i>
+          </button>
+          <button class="btn btn-outline-secondary" title="Lịch sử" onclick="viewHistoryGiamDinh('${row["Mã container"]}')">
+            <span class="fw-bold text-dark small" style="font-family: monospace;">H</span>
+          </button>
+          <button class="btn btn-outline-primary" title="Sửa dòng" onclick="editGiamDinh(${row.rowIndex})">
+            <i class="bi bi-pencil-fill"></i>
+          </button>
+          ${currentUser && currentUser.role === 'admin' ? `
+          <button class="btn btn-outline-danger" title="Xóa" onclick="deleteGiamDinh(${row.rowIndex}, '${row["Mã container"]}')">
+            <i class="bi bi-trash"></i>
+          </button>` : ''}
+        </div>
+      </td>
+    `;
     tbody.appendChild(tr);
   });
 }
@@ -2233,6 +2242,62 @@ function renderSuaChuaPage() {
         `;
     tbody.appendChild(tr);
   });
+}
+// ================= HÀM XEM CHI TIẾT GIÁM ĐỊNH =================
+function viewDetailGiamDinh(rowIndex) {
+    // Tìm dòng dữ liệu tương ứng
+    const rowData = dataGiamDinh.find(r => r.rowIndex === rowIndex);
+    if (!rowData) {
+        alert("Không tìm thấy dữ liệu dòng này!");
+        return;
+    }
+
+    // Đổ dữ liệu vào HTML (Sử dụng lại modal viewDetailModal có sẵn)
+    const bodyHtml = `
+    <table class="table table-striped mb-0 small">
+        <tr><td class="fw-bold" style="width:40%;">Mã Container:</td><td class="text-primary fw-bold text-uppercase">${rowData["Mã container"] || ""}</td></tr>
+        <tr><td class="fw-bold">Hãng tàu:</td><td>${rowData["Hãng tàu"] || ""}</td></tr>
+        <tr><td class="fw-bold">Phân loại vỏ:</td><td><span class="badge bg-dark">Hạng ${rowData["Trạng thái"] || "A"}</span></td></tr>
+        <tr><td class="fw-bold">Cần sửa chữa:</td><td>${(rowData["Trạng thái"] === "C" || rowData["Cần sửa chữa"] === "CÓ") ? '<span class="text-danger fw-bold">Có</span>' : '<span class="text-success fw-bold">Không</span>'}</td></tr>
+        <tr><td class="fw-bold">Hạng mục lỗi:</td><td class="text-danger">${rowData["Tình trạng"] || "Không phát hiện lỗi"}</td></tr>
+        <tr><td class="fw-bold">Ghi chú kèm theo:</td><td>${rowData["Ghi chú"] || "Trống"}</td></tr>
+    </table>`;
+
+    const detailBodyEl = document.getElementById("detailModalBody");
+    if (detailBodyEl) {
+        detailBodyEl.innerHTML = bodyHtml;
+        // Mở Modal
+        const viewModal = bootstrap.Modal.getOrCreateInstance(document.getElementById("viewDetailModal"));
+        viewModal.show();
+    }
+}
+
+// ================= HÀM XÓA DỮ LIỆU GIÁM ĐỊNH =================
+async function deleteGiamDinh(rowIndex, maCont) {
+    if (!confirm(`Cảnh báo: Bạn có chắc chắn muốn XÓA VĨNH VIỄN phiếu giám định của container ${maCont || ''} không?`)) return;
+    
+    showLoading(true);
+    try {
+        await fetch(API_URL, {
+            method: "POST",
+            mode: "no-cors",
+            body: JSON.stringify({
+                sheetType: "GiamDinh", // Gọi đến sheet GiamDinh bên App Script
+                action: "delete",
+                rowIndex: rowIndex
+            })
+        });
+        
+        // Đợi 1.5s để Google Sheets kịp xử lý xóa dòng rồi tải lại bảng
+        setTimeout(() => {
+            alert("Đã xóa phiếu giám định thành công!");
+            fetchGiamDinhData(); 
+        }, 1500);
+    } catch (e) {
+        console.error("Lỗi khi xóa:", e);
+        alert("Lỗi kết nối khi xóa dữ liệu!");
+        showLoading(false);
+    }
 }
 //==========Giam dinh
 // HÀM KIỂM TRA BOOKING TỒN TẠI TRONG QL. LỆNH
