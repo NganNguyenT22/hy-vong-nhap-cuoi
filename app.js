@@ -2301,111 +2301,28 @@ async function deleteGiamDinh(rowIndex, maCont) {
 }
 //==========Giam dinh
 // HÀM KIỂM TRA BOOKING TỒN TẠI TRONG QL. LỆNH
-
 async function checkBookingHopLe(bookingInput) {
   if (!bookingInput) return false;
-  const cleanInput = bookingInput.trim().toUpperCase();
+  const cleanInput = bookingInput.trim().toLowerCase();
 
-  // Đồng bộ chuẩn xác về mảng dataQuanLyLenh của hệ thống
-  if (!dataQuanLyLenh || dataQuanLyLenh.length === 0) {
+  // Nếu mảng dữ liệu Lệnh (globalDataLenh) đang rỗng, tự động fetch từ Sheets về
+  if (!window.globalDataLenh || window.globalDataLenh.length === 0) {
     try {
       showLoading(true);
       const res = await fetch(API_URL + "?type=QuanLyLenh");
-      dataQuanLyLenh = await res.json();
-    } catch (e) {
-      console.error("Lỗi tải dữ liệu lệnh để đối chiếu:", e);
-      return false;
-    } finally {
+      window.globalDataLenh = await res.json();
       showLoading(false);
+    } catch (e) {
+      console.error("Lỗi tải dữ liệu lệnh:", e);
+      showLoading(false);
+      return false;
     }
   }
 
-  // Quét tìm số lệnh hoặc số booking hợp lệ
-  return dataQuanLyLenh.some(row => 
-    (row["Số Booking"] && row["Số Booking"].toUpperCase() === cleanInput) ||
-    (row["Số lệnh"] && row["Số lệnh"].toUpperCase() === cleanInput)
-  );
-}
-// ================= NGHIỆP VỤ TẠO PHIẾU EIR HẠ RỖNG =================
-
-document.addEventListener("DOMContentLoaded", function () {
-  const formHaRong = document.getElementById("form-eir-harong");
-  if (formHaRong) {
-    formHaRong.addEventListener("submit", saveEIRHaRongToSheet);
-  }
-});
-
-async function saveEIRHaRongToSheet(e) {
-  if (e) e.preventDefault(); // Chặn reload trang web triệt để
-
-  const bookingVal = document.getElementById("harong-booking").value.trim();
-
-  // 1. Chạy hàm thẩm định xem Số Booking có nằm trong danh mục Quản lý Lệnh không
-  const isBookingValid = await checkBookingHopLe(bookingVal);
-  if (!isBookingValid) {
-    alert("❌ Nhập sai! Số Booking không tồn tại trong hệ thống QL. Lệnh.");
-    return;
-  }
-
-  showLoading(true);
-
-  // 2. Thu thập dữ liệu từ các ô nhập trên giao diện Web
-  const solenh = document.getElementById("harong-solenh").value.trim();
-  const hangtau = document.getElementById("harong-hangtau").value.trim();
-  const loaivo = document.getElementById("harong-loaivo").value.trim();
-  const socont = document.getElementById("harong-socont").value.trim();
-  const trangthai = document.getElementById("harong-trangthai").value.trim();
-  const soxe = document.getElementById("harong-soxe").value.trim();
-  const romooc = document.getElementById("harong-romooc").value.trim();
-  const taixe = document.getElementById("harong-taixe").value.trim();
-  const ghichu = document.getElementById("harong-ghichu").value.trim();
-
-  // Tạo mã Số EIR ngẫu nhiên tự động hoặc theo chuỗi thời gian (Ví dụ: EIR26xxxx)
-  const soEIR = "EIR" + Math.floor(100000 + Math.random() * 900000); 
-
-  // 3. Đóng gói payload gửi lên Google Apps Script
-  const payload = {
-    action: "saveEIR",
-    sheetType: "GiaoNhan",       // Chỉ định nạp vào tab Giao Nhận
-    loaiPhieu: "HaRong",         // Phân bổ logic xử lý hạ rỗng
-    
-    // Khớp 100% với cấu trúc các cột trên ảnh Excel của bạn
-    thoiGian: new Date().toLocaleString("vi-VN"),
-    soEIR: soEIR,
-    soLenh: solenh,
-    booking: bookingVal.toUpperCase(),
-    hangTau: hangtau.toUpperCase(),
-    loaiVo: loaivo.toUpperCase(),
-    soCont: socont.toUpperCase(),
-    trangThai: trangthai,
-    soXe: soxe.toUpperCase(),
-    roMooc: romooc.toUpperCase(),
-    taiXe: taixe,
-    ghiChu: ghichu
-  };
-
-  try {
-    const response = await fetch(API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(payload)
-    });
-
-    if (response.ok) {
-      alert(`🎉 Thành công! Đã tạo phiếu lệnh ${soEIR} và lưu vào bảng Excel Hạ Rỗng.`);
-      document.getElementById("form-eir-harong").reset(); // Làm sạch form
-      
-      // Khởi động lại bảng danh sách để cập nhật dòng mới lên màn hình Web
-      if (typeof fetchGiaoNhanData === "function") fetchGiaoNhanData();
-    } else {
-      alert("⚠️ Lỗi từ máy chủ Google Sheets phản hồi. Không thể ghi dữ liệu.");
-    }
-  } catch (error) {
-    console.error("Lỗi đường truyền POST API:", error);
-    alert("❌ Không thể kết nối với Google Sheets. Vui lòng kiểm tra lại mạng hoặc link API_URL Apps Script!");
-  } finally {
-    showLoading(false);
-  }
+  // Quét đối chiếu với cột Booking ID từ QL. Lệnh
+  return window.globalDataLenh.some((row) => {
+    const idRaw =
+      row["Booking ID"] || row["Booking id"] || row["Booking ID "] || "";
+    return idRaw.toString().trim().toLowerCase() === cleanInput;
+  });
 }
