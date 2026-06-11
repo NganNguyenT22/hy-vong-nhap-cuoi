@@ -1,5 +1,5 @@
 const API_URL =
-  "https://script.google.com/macros/s/AKfycbwac62Ty7gGSIWmEY25Sm4LDS9DQucxU9CXBC3ZSVlTkUvdtY1b3Z6aBhTyM6ar7YDL/exec"; // <-- THAY LINK CỦA BẠN VÀO ĐÂY
+  "https://script.google.com/macros/s/AKfycbyu_JxFlmxFNKObTQhdlxWITkUUyudOG-hB4CkUXLCGNM05baOBbYMC7IsYXjfFw9qN/exec"; // <-- THAY LINK CỦA BẠN VÀO ĐÂY
 
 let currentUser = null;
 let dataNhap = [];
@@ -709,7 +709,8 @@ function openEirModal(mode, rowIndex = null) {
 async function saveEirData() {
   const rowIndex = document.getElementById("eir_rowIndex").value;
   // 1. LẤY SỐ BOOKING VÀ KIỂM TRA TRƯỚC KHI LƯU
-  const bookingGhiNhan = document.getElementById("eir_booking").value.trim();
+  const bookingEl = document.getElementById("eir_booking") || document.getElementById("gn_booking");
+  const bookingGhiNhan = bookingEl ? bookingEl.value.trim() : "";
   if (!bookingGhiNhan) {
     alert("Vui lòng nhập số Booking!");
     return;
