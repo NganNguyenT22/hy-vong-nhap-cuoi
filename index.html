@@ -454,7 +454,7 @@
         <!-- Vị trí-->
         <!--Giam dinh-->
         <div id="page-quanlytinhtrang" class="page">
-          <div class="d-flex justify-content-between align-items-center mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
             <div>
               <h4 class="fw-bold text-dark mb-1">
                 Quản Lý Tình Trạng Vỏ Container
@@ -464,12 +464,20 @@
                 chữa
               </p>
             </div>
-            <button
-              class="btn btn-primary btn-sm px-3 shadow-sm rounded-2"
-              onclick="openModalGiamDinh()"
-            >
-              <i class="bi bi-plus-lg me-1"></i> Tạo phiếu giám định
-            </button>
+            <div class="d-flex gap-2 align-items-center">
+                <div class="input-group input-group-sm shadow-sm" style="width: 220px;">
+                    <input type="text" class="form-control" id="search-giamdinh" placeholder="Tìm Mã Container..." oninput="searchGiamDinh()">
+                    <button class="btn btn-warning" type="button" onclick="searchGiamDinh()">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+                <button class="btn btn-primary btn-sm px-3 shadow-sm rounded-2 text-nowrap" onclick="openModalGiamDinh()">
+                  <i class="bi bi-plus-lg me-1"></i> Tạo phiếu
+                </button>
+                <button class="btn btn-outline-secondary btn-sm px-2 shadow-sm rounded-2" title="Làm mới dữ liệu" onclick="fetchGiamDinhData()">
+                  <i class="bi bi-arrow-clockwise"></i>
+                </button>
+            </div>
           </div>
 
           <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
