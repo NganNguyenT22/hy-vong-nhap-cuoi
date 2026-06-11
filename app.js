@@ -1764,19 +1764,12 @@ async function handleSaveViTri(e) {
   e.preventDefault();
 
   const action = document.getElementById("vitri-action-type").value;
-  const noCont = document
-    .getElementById("vitri-nocont")
-    .value.trim()
-    .toUpperCase();
+  const noCont = document.getElementById("vitri-nocont").value.trim().toUpperCase();
+  //Lấy dữ liệu khu vực mới thêm
+  const khu = document.getElementById("vitri-khu").value; 
   const bay = document.getElementById("vitri-bay").value.trim().toUpperCase();
-  const rowCoord = document
-    .getElementById("vitri-row")
-    .value.trim()
-    .toUpperCase();
-  const colCoord = document
-    .getElementById("vitri-col")
-    .value.trim()
-    .toUpperCase();
+  const rowCoord = document.getElementById("vitri-row").value.trim().toUpperCase();
+  const colCoord = document.getElementById("vitri-col").value.trim().toUpperCase();
   const tier = document.getElementById("vitri-tier").value.trim();
 
   showLoading(true);
@@ -1786,12 +1779,13 @@ async function handleSaveViTri(e) {
     // Cần đảm bảo hàm doPost trong Apps Script có xử lý cho type 'SaveViTri'
     const response = await fetch(API_URL, {
       method: "POST",
-      mode: "no-cors", // Dùng chế độ này để tránh lỗi CORS của Google Script nếu chưa xử lý trả về header
+      mode: "no-cors",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
         action: "saveViTri",
-        typeAction: action, // create hoặc update
+        typeAction: action, 
         maCont: noCont,
+        khuVuc: khu, // Đẩy khu vực lên API
         bay: bay,
         row: rowCoord,
         column: colCoord,
@@ -1802,30 +1796,30 @@ async function handleSaveViTri(e) {
     if (bootstrapModalViTri) bootstrapModalViTri.hide();
     alert("Thực hiện lưu dữ liệu vị trí hoàn tất!");
 
+    // Cập nhật lại mảng hiển thị (sử dụng đúng key để table render ra dữ liệu)
+    const newData = {
+        "Khu vực": khu,
+        "Dãy": bay,
+        "Hàng": rowCoord,
+        "Cột": colCoord,
+        "Tầng": tier,
+        "Mã container": noCont,
+    };
+    
     // Cập nhật mảng local để người dùng thấy ngay kết quả không cần đợi Sheet cập nhật chậm
     if (action === "create") {
-      dataViTri.push({
-        "Mã container": noCont,
-        Bay: bay,
-        Row: rowCoord,
-        Column: colCoord,
-        Tier: tier,
-      });
+      // Đẩy dữ liệu mới vào mảng
+      window.globalDataViTri.push(newData);
     } else {
-      const index = dataViTri.findIndex(
-        (item) => item["Mã container"] === noCont,
-      );
+      // Cập nhật dữ liệu cũ
+      const index = window.globalDataViTri.findIndex((item) => item["Mã container"] === noCont);
       if (index !== -1) {
-        dataViTri[index] = {
-          "Mã container": noCont,
-          Bay: bay,
-          Row: rowCoord,
-          Column: colCoord,
-          Tier: tier,
-        };
+        window.globalDataViTri[index] = newData;
       }
     }
-    renderDanhSachViTri();
+    
+    // Gọi lại hàm vẽ bảng để thấy ngay sự thay đổi
+    renderTableViTri(window.globalDataViTri);
   } catch (error) {
     console.error("Lỗi khi lưu vị trí:", error);
     alert("Lưu thất bại, vui lòng kiểm tra kết nối mạng!");
