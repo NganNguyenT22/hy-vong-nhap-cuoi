@@ -1697,8 +1697,15 @@ function renderTableViTri(data) {
     const tr = document.createElement("tr");
 
     // Đọc trạng thái dựa vào việc trường 'Mã container' có dữ liệu hay không
-    const hasContainer =
-      row["Mã container"] && row["Mã container"].toString().trim() !== "";
+    // Đọc dữ liệu an toàn
+    const maCont = row["Mã container"] ? row["Mã container"].toString().trim() : "";
+    const khu = row["Khu vực"] || row["Khu"] || "-";
+    const bay = row["Dãy"] || "-";
+    const hRow = row["Hàng"] || "-";
+    const col = row["Cột"] || "-";
+    const tier = row["Tầng"] || "1";
+
+    const hasContainer = maCont !== "";
 
     const badgeStatus = !hasContainer
       ? `<span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">Vị trí trống</span>`
@@ -1706,23 +1713,120 @@ function renderTableViTri(data) {
 
     const containerDisplay = !hasContainer
       ? `<span class="text-muted text-opacity-50">-</span>`
-      : `<strong class="text-primary font-monospace">${row["Mã container"]}</strong>`;
+      : `<strong class="text-primary font-monospace">${maCont}</strong>`;
 
     tr.innerHTML = `
-            <td class="ps-3 text-muted">${index + 1}</td>
-            <td class="fw-bold text-dark">Khu ${row["Khu vực"] || "-"}</td>
-            <td>Dãy ${row["Dãy"] || "-"}</td>
-            <td>Hàng ${row["Hàng"] || "-"}</td>
-            <td>Cột ${row["Cột"] || "-"}</td>
-            <td><span class="badge bg-secondary px-2">Tầng ${row["Tầng"] || "1"}</span></td>
-            <td>${badgeStatus}</td>
-            <td>${containerDisplay}</td>
-        `;
+        <td class="ps-3 text-muted">${index + 1}</td>
+        <td class="fw-bold text-dark">Khu ${khu}</td>
+        <td>Dãy ${bay}</td>
+        <td>Hàng ${hRow}</td>
+        <td>Cột ${col}</td>
+        <td><span class="badge bg-secondary px-2">Tầng ${tier}</span></td>
+        <td>${badgeStatus}</td>
+        <td>${containerDisplay}</td>
+        <td class="text-center">
+            <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-info" title="Chi tiết" onclick="xemChiTietViTri('${maCont}', '${khu}', '${bay}', '${hRow}', '${col}', '${tier}')">
+                    <i class="bi bi-info-circle"></i>
+                </button>
+                <button class="btn btn-outline-primary" title="Chỉnh sửa" onclick="openModalSuaViTri('${maCont}', '${khu}', '${bay}', '${hRow}', '${col}', '${tier}')">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-outline-danger" title="Xóa" onclick="deleteViTri('${maCont}', '${khu}', '${bay}', '${hRow}', '${col}', '${tier}')">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </td>
+    `;
     tbody.appendChild(tr);
   });
 }
+// 3. Hàm kích hoạt mở modal để Chỉnh sửa tọa độ cũ (Đã thêm biến khu)
+function openModalSuaViTri(noCont, khu, bay, row, col, tier) {
+  document.getElementById("vitri-action-type").value = "update";
+  document.getElementById("vitri-nocont").value = noCont;
+  document.getElementById("vitri-nocont").readOnly = true; // Sửa thì không cho đổi số xe tránh lệch data
+  
+  const khuEl = document.getElementById("vitri-khu");
+  if(khuEl) khuEl.value = khu !== "-" ? khu : "A";
 
-// 3. Hàm kích hoạt mở modal Thêm mới
+  document.getElementById("vitri-bay").value = bay !== "-" ? bay : "";
+  document.getElementById("vitri-row").value = row !== "-" ? row : "";
+  document.getElementById("vitri-col").value = col !== "-" ? col : "";
+  document.getElementById("vitri-tier").value = tier !== "-" ? tier : "";
+
+  document.getElementById("modalViTriTitle").innerHTML =
+    '<i class="bi bi-pencil-square me-2"></i> Cập nhật tọa độ vị trí';
+
+  if (!bootstrapModalViTri) {
+    bootstrapModalViTri = new bootstrap.Modal(document.getElementById("modalViTri"));
+  }
+  bootstrapModalViTri.show();
+}
+// 4. Hàm bổ trợ xem chi tiết khi bấm chữ i (Sử dụng modal viewDetailModal có sẵn)
+function xemChiTietViTri(maCont, khu, bay, row, col, tier) {
+  const bodyHtml = `
+    <table class="table table-striped mb-0 small">
+        <tr><td class="fw-bold" style="width:40%;">Mã Container:</td><td class="text-primary fw-bold text-uppercase">${maCont || '<span class="text-muted">Đang trống</span>'}</td></tr>
+        <tr><td class="fw-bold">Khu vực (Block):</td><td>Khu ${khu}</td></tr>
+        <tr><td class="fw-bold">Dãy (Bay):</td><td>${bay}</td></tr>
+        <tr><td class="fw-bold">Hàng (Row):</td><td>${row}</td></tr>
+        <tr><td class="fw-bold">Cột (Slot):</td><td>${col}</td></tr>
+        <tr><td class="fw-bold">Tầng (Tier):</td><td>Tầng ${tier}</td></tr>
+    </table>`;
+
+  const detailBodyEl = document.getElementById("detailModalBody");
+  if (detailBodyEl) {
+    detailBodyEl.innerHTML = bodyHtml;
+    const mEl = document.getElementById("viewDetailModal");
+    if (mEl) {
+      const viewModal = bootstrap.Modal.getInstance(mEl) || new bootstrap.Modal(mEl);
+      viewModal.show();
+    }
+  }
+}
+// 5. Hàm xóa dòng dữ liệu vị trí
+async function deleteViTri(maCont, khu, bay, row, col, tier) {
+  if (!confirm(`Bạn có chắc chắn muốn xóa dữ liệu vị trí này?\nContainer: ${maCont || '[Trống]'}\nTọa độ: Khu ${khu} - Dãy ${bay} - Hàng ${row} - Cột ${col} - Tầng ${tier}`)) return;
+  
+  showLoading(true);
+  try {
+      await fetch(API_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({
+              action: "saveViTri", // Vẫn gọi hàm saveViTri bên App Script nhưng typeAction là delete
+              typeAction: "delete", 
+              maCont: maCont,
+              khuVuc: khu,
+              bay: bay,
+              row: row,
+              column: col,
+              tier: tier
+          }),
+      });
+
+      // Cập nhật giao diện lập tức (xóa khỏi mảng dữ liệu hiện tại)
+      const index = window.globalDataViTri.findIndex(item => 
+          (maCont && item["Mã container"] === maCont) || 
+          (!maCont && item["Khu vực"] === khu && item["Dãy"] === bay && item["Hàng"] === row && item["Cột"] === col && item["Tầng"] == tier)
+      );
+      
+      if (index !== -1) {
+          window.globalDataViTri.splice(index, 1);
+      }
+      
+      alert("Đã xóa vị trí thành công!");
+      renderTableViTri(window.globalDataViTri);
+  } catch (error) {
+      console.error("Lỗi khi xóa vị trí:", error);
+      alert("Xóa thất bại, vui lòng kiểm tra kết nối mạng!");
+  } finally {
+      showLoading(false);
+  }
+}
+// 6. Hàm kích hoạt mở modal Thêm mới
 function openModalThemViTri() {
   document.getElementById("form-vitri-container").reset();
   document.getElementById("vitri-action-type").value = "create";
