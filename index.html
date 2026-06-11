@@ -392,6 +392,8 @@
           </div>
         </div>
         <!-- Vị trí-->
+        
+        
         <div id="page-quanly-vitri" class="page">
           <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
@@ -401,14 +403,23 @@
                 tế
               </p>
             </div>
-            <button
-              class="btn btn-primary btn-sm fw-bold"
-              onclick="loadDataViTri()"
-            >
-              <i class="bi bi-arrow-clockwise me-1"></i> Làm mới dữ liệu
-            </button>
+            <div class="d-flex gap-2">
+              <button class="btn btn-success btn-sm fw-bold shadow-sm" onclick="openModalThemViTri()">
+                <i class="bi bi-plus-lg me-1"></i> Ghi nhận vị trí
+              </button>
+              <button class="btn btn-primary btn-sm fw-bold shadow-sm" onclick="loadDataViTri()">
+                <i class="bi bi-arrow-clockwise me-1"></i> Làm mới
+              </button>
+              <button
+                class="btn btn-primary btn-sm fw-bold"
+                onclick="loadDataViTri()"
+              >
+                <i class="bi bi-arrow-clockwise me-1"></i> Làm mới dữ liệu
+              </button>
+            </div>
           </div>
 
+          
           <div class="card border-0 shadow-sm">
             <div class="card-body p-0">
               <div class="table-responsive">
