@@ -252,54 +252,48 @@
           </div>
         </div>
 
-       <div id="page-cont-nhap" class="page">
-  <div class="card shadow-sm p-3">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h6 class="fw-bold m-0 text-primary">
-        <i class="bi bi-box-arrow-in-down me-1"></i> BÁO CÁO NHẬP CONTAINER RỖNG (HẠ RỖNG)
-      </h6>
-      <div>
-        <button
-          class="btn btn-primary btn-sm role-section view-dieudo"
-          onclick="openFormEIRHaRongChuyenDung()"
-        >
-          <i class="bi bi-plus-lg"></i> Lập phiếu EIR Hạ Rỗng
-        </button>
-        <button
-          class="btn btn-outline-secondary btn-sm"
-          onclick="fetchGiaoNhanHaRongData()"
-        >
-          <i class="bi bi-arrow-clockwise"></i> Cập nhật
-        </button>
-      </div>
-    </div>
-    
-    <div class="table-responsive">
-      <table class="table table-hover align-middle text-nowrap">
-        <thead class="table-light">
-          <tr>
-            <th>Stt</th>
-            <th>Thời gian</th>
-            <th>Số EIR</th>
-            <th>Số lệnh</th>
-            <th>Số Booking</th>
-            <th>Hãng tàu</th>
-            <th>Loại vỏ</th>
-            <th>Số Container</th>
-            <th>Trạng thái</th>
-            <th>Số xe</th>
-            <th>Số rơ moóc</th>
-            <th>Tài xế</th>
-            <th>Ghi chú</th>
-            <th class="text-center">Thao tác</th>
-          </tr>
-        </thead>
-        <tbody id="tbody-nhap">
-          </tbody>
-      </table>
-    </div>
-  </div>
-</div>
+        <!-- TRANG 2: CONTAINER NHẬP BÃI -->
+        <div id="page-cont-nhap" class="page">
+          <div class="card shadow-sm p-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="fw-bold m-0 text-primary">
+                BÁO CÁO NHẬP CONTAINER RỖNG
+              </h6>
+              <div>
+                <!-- Nút Thêm Lệnh chỉ hiện cho Điều Độ hoặc Admin -->
+                <button
+                  class="btn btn-primary btn-sm role-section view-dieudo"
+                  onclick="openModal('add', 'ContNhap')"
+                >
+                  <i class="bi bi-plus-lg"></i> Lập phiếu EIR Hạ Rỗng
+                </button>
+                <button
+                  class="btn btn-outline-secondary btn-sm"
+                  onclick="loadData('ContNhap')"
+                >
+                  <i class="bi bi-arrow-clockwise"></i> Cập nhật
+                </button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-hover align-middle text-nowrap">
+                <thead class="table-light">
+                  <tr>
+                    <th>Stt</th>
+                    <th>Số Container</th>
+                    <th>Size</th>
+                    <th>Line</th>
+                    <th>Ngày nhập bãi</th>
+                    <th>Bãi (Vị trí)</th>
+                    <th>Ghi chú (M&R)</th>
+                    <th class=>Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-nhap"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
 
         <!-- TRANG 3: CONTAINER CẤP RỖNG -->
         <div id="page-cont-cap" class="page">
@@ -915,11 +909,6 @@
                   class="btn-close btn-close-white"
                   data-bs-dismiss="modal"
                 ></button>
-
-              <button type="submit" class="btn btn-primary fw-bold">
-    <i class="bi bi-save me-1"></i> Xác nhận tạo phiếu EIR
-</button>
-                
               </div>
               <div class="modal-body">
                 <form id="eirForm" class="row g-3">
