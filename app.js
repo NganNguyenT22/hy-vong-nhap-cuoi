@@ -2301,28 +2301,91 @@ async function deleteGiamDinh(rowIndex, maCont) {
 }
 //==========Giam dinh
 // HÀM KIỂM TRA BOOKING TỒN TẠI TRONG QL. LỆNH
+
 async function checkBookingHopLe(bookingInput) {
   if (!bookingInput) return false;
-  const cleanInput = bookingInput.trim().toLowerCase();
+  const cleanInput = bookingInput.trim().toUpperCase();
 
-  // Nếu mảng dữ liệu Lệnh (globalDataLenh) đang rỗng, tự động fetch từ Sheets về
-  if (!window.globalDataLenh || window.globalDataLenh.length === 0) {
+  // Đồng bộ chuẩn xác về mảng dataQuanLyLenh của hệ thống
+  if (!dataQuanLyLenh || dataQuanLyLenh.length === 0) {
     try {
       showLoading(true);
       const res = await fetch(API_URL + "?type=QuanLyLenh");
-      window.globalDataLenh = await res.json();
-      showLoading(false);
+      dataQuanLyLenh = await res.json();
     } catch (e) {
-      console.error("Lỗi tải dữ liệu lệnh:", e);
-      showLoading(false);
+      console.error("Lỗi tải dữ liệu lệnh để đối chiếu:", e);
       return false;
+    } finally {
+      showLoading(false);
     }
   }
 
-  // Quét đối chiếu với cột Booking ID từ QL. Lệnh
-  return window.globalDataLenh.some((row) => {
-    const idRaw =
-      row["Booking ID"] || row["Booking id"] || row["Booking ID "] || "";
-    return idRaw.toString().trim().toLowerCase() === cleanInput;
-  });
+  // Quét tìm số lệnh hoặc số booking hợp lệ
+  return dataQuanLyLenh.some(row => 
+    (row["Số Booking"] && row["Số Booking"].toUpperCase() === cleanInput) ||
+    (row["Số lệnh"] && row["Số lệnh"].toUpperCase() === cleanInput)
+  );
+}
+// ================= NGHIỆP VỤ TẠO PHIẾU EIR HẠ RỖNG =================
+
+// 1. Chờ DOM sẵn sàng để gán bộ lắng nghe Form
+document.addEventListener("DOMContentLoaded", function () {
+  const formHaRong = document.getElementById("form-eir-harong");
+  if (formHaRong) {
+    formHaRong.addEventListener("submit", executeSaveEIRHaRong);
+  }
+});
+
+// 2. Hàm gom dữ liệu từ Web đẩy thẳng về API Google Sheets thông qua POST
+async function executeSaveEIRHaRong(e) {
+  if (e) e.preventDefault(); // Ngăn chặn tải lại trang web làm ngắt kết nối API
+
+  // Lấy giá trị ô nhập số booking/lệnh từ giao diện của bạn
+  const inputBookingElement = document.getElementById("harong-booking") || document.getElementById("eir-booking");
+  if (!inputBookingElement) {
+     alert("Không tìm thấy ô nhập Số Booking trên giao diện!");
+     return;
+  }
+  const bookingValue = inputBookingElement.value.trim();
+
+  // Chạy thẩm định số lệnh
+  const checkValid = await checkBookingHopLe(bookingValue);
+  if (!checkValid) {
+    alert("❌ Số Booking/Lệnh này không tồn tại trên hệ thống! Vui lòng kiểm tra lại.");
+    return;
+  }
+
+  showLoading(true);
+
+  // Gói Payload chuẩn cấu hình POST gửi lên Google Apps Script
+  const payload = {
+    action: "saveEIR",         // Định danh hành động xử lý trên Apps Script
+    sheetType: "GiaoNhan",     // Đích đến là Sheet Giao Nhận
+    loaiPhieu: "HaRong",       // Phân loại Hạ rỗng
+    booking: bookingValue.toUpperCase(),
+    thoiGian: new Date().toLocaleString("vi-VN")
+    // Bạn có thể bổ sung thêm document.getElementById các trường như số xe, tài xế vào đây nếu cần lưu thêm
+  };
+
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+
+    if (response.ok) {
+      alert("🎉 Tạo phiếu lệnh EIR Hạ Rỗng thành công! Dữ liệu đã ghi nhận về Google Sheets.");
+      document.getElementById("form-eir-harong").reset(); // Xóa sạch form nhập liệu
+      
+      // Tải lại bảng danh sách giao nhận hiển thị trên màn hình nếu có hàm fetch
+      if (typeof fetchGiaoNhanData === "function") fetchGiaoNhanData();
+    } else {
+      alert(" Máy chủ phản hồi lỗi. Không thể lưu dữ liệu.");
+    }
+  } catch (error) {
+    console.error("Lỗi API kết nối Google Sheets:", error);
+    alert("❌ Lỗi kết nối mạng hoặc lỗi đường link API_URL Apps Script!");
+  } finally {
+    showLoading(false);
+  }
 }
